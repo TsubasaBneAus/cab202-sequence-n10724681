@@ -1,0 +1,1 @@
+void decode_sequence(uint8_t sequence_index, uint8_t decoded_sequence[24]);

@@ -1,0 +1,1 @@
+void display_and_button_init(void);
