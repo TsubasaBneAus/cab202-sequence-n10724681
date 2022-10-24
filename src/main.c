@@ -56,106 +56,117 @@ int main(void)
 
     STATE_2 input_state = START;
 
+    typedef enum {
+        CMD_SEQ,
+        CMD_TEST,
+        CMD_EXIT,
+        CMD_PAUSE,
+        CMD_STEP,
+        CMD_SYNC,
+        CMD_SEQIDX,
+        CMD_TEST_SEQ,
+        CMD_TEST_SEQNS,
+        NO_CMD
+    } STATE_3;
+
+    STATE_3 serial_command = NO_CMD;
+
     char buf[128];
 
     while (1)
     {
-        char c = uart_getc();
 
-        switch (input_state)
-        {
-        case START:
-            if (c == 0x5C)
-            {
-                sprintf(buf, "\\\n");
-                input_state = ESCAPE;
-            }
-            else
-            {
-                sprintf(buf, "#NACK\n");
-                input_state = START;
-            }
-            break;
+        // char c = uart_getc();
+        // switch (input_state)
+        // {
+        // case START:
+        //     if (c == 0x5C)
+        //     {
+        //         sprintf(buf, "\\\n");
+        //         input_state = ESCAPE;
+        //     }
+        //     else
+        //     {
+        //         sprintf(buf, "#NACK\n");
+        //         input_state = START;
+        //     }
+        //     break;
 
-        case ESCAPE:
-            if (c == 0x5C)
-            {
-                sprintf(buf, "\\\n");
-                input_state = ID;
-            }
-            else
-            {
-                sprintf(buf, "#NACK\n");
-                input_state = START;
-            }
-            break;
+        // case ESCAPE:
+        //     if (c == 0x5C)
+        //     {
+        //         sprintf(buf, "\\\n");
+        //         input_state = ID;
+        //     }
+        //     else
+        //     {
+        //         sprintf(buf, "#NACK\n");
+        //         input_state = START;
+        //     }
+        //     break;
 
-        case ID:
-            switch (c)
-            {
-            case 's':
-                sprintf(buf, "s\nENTER YOUR INPUT\n");
-                input_state = START;
-                break;
+        // case ID:
+        //     switch (c)
+        //     {
+        //     case 's':
+        //         sequence_mode_1 = SELECT_SEQUENCE;
+        //         serial_command = CMD_SEQ;
+        //         sprintf(buf, "#ACK\n");
+        //         break;
 
-            case 't':
-                sprintf(buf, "t\n");
-                input_state = START;
-                break;
+        //     case 't':
+        //         sprintf(buf, "#ACK\n");
+        //         input_state = START;
+        //         break;
 
-            case 'e':
-                sprintf(buf, "e\n");
-                input_state = START;
-                break;
+        //     case 'e':
+        //         sequence_mode_1 = PAUSE_SEQUENCE;
+        //         serial_command = CMD_EXIT;
+        //         sprintf(buf, "#ACK\n");
+        //         break;
 
-            case 'p':
-                sprintf(buf, "p\n");
-                input_state = START;
-                break;
+        //     case 'p':
+        //         sequence_mode_1 = EXECUTE_SEQUENCE;
+        //         serial_command = CMD_PAUSE;
+        //         sprintf(buf, "#ACK\n");
+        //         break;
 
-            case 'n':
-                sprintf(buf, "n\n");
-                input_state = START;
-                break;
+        //     case 'n':
+        //         sequence_mode_1 = PAUSE_SEQUENCE;
+        //         serial_command = CMD_STEP;
+        //         sprintf(buf, "#ACK\n");
+        //         break;
 
-            case 'y':
-                sprintf(buf, "y\n");
-                input_state = START;
-                break;
+        //     case 'y':
+        //         sprintf(buf, "#ACK\n");
+        //         input_state = START;
+        //         break;
 
-            case 'i':
-                sprintf(buf, "i\n");
-                input_state = START;
-                break;
+        //     case 'i':
+        //         sprintf(buf, "i\n");
+        //         input_state = START;
+        //         break;
 
-            case 'd':
-                sprintf(buf, "d\n");
-                input_state = START;
-                break;
+        //     case 'd':
+        //         sprintf(buf, "d\n");
+        //         input_state = START;
+        //         break;
 
-            case 'u':
-                sprintf(buf, "u\n");
-                input_state = START;
-                break;
+        //     case 'u':
+        //         sprintf(buf, "u\n");
+        //         input_state = START;
+        //         break;
 
-            default:
-                sprintf(buf, "#NACK\n");
-                input_state = START;
-                break;
-            }
+        //     default:
+        //         sprintf(buf, "#NACK\n");
+        //         input_state = START;
+        //         break;
+        //     }
 
-        case PAYLOAD:
-            break;
-        }
+        // case PAYLOAD:
+        //     break;
+        // }
 
-        const char *ptr = buf;
-        while (*ptr != '\0')
-        {
-            while (!(USART0.STATUS & USART_DREIF_bm))
-                ;
-            USART0.TXDATAL = *ptr;
-            ptr++;
-        }
 
         pb_previous = pb_current;
         pb_current = pb_debounced;
@@ -201,9 +212,9 @@ int main(void)
                     display_hex(sequence_index);
                 }
             }
-            else if (pb_falling & PIN7_bm)
+            else if ((pb_falling & PIN7_bm) || (serial_command == CMD_SEQ))
             {
-                // S4 pressed
+                // S4 pressed or CMD_SEQ executed
                 sequence_index_2 = sequence_index;
                 read_sequence_counter = 0;
                 read_sequence();
@@ -211,6 +222,8 @@ int main(void)
                 sequence_mode_2 = 0;
                 sequence_state = 0;
                 timer_counter = 0;
+                input_state = START;
+                serial_command = NO_CMD;
             }
             break;
 
@@ -222,11 +235,13 @@ int main(void)
                 break;
             }
 
-            if (pb_falling & PIN7_bm)
+            if ((pb_falling & PIN7_bm) || (serial_command == CMD_PAUSE))
             {
-                // S4 pressed
+                // S4 pressed or CMD_PAUSE executed
                 paused_sequence_state = sequence_state;
                 sequence_mode_1 = PAUSE_SEQUENCE;
+                input_state = START;
+                serial_command = NO_CMD;
             }
 
             if (sequence_mode_2 == 2)
@@ -256,16 +271,18 @@ int main(void)
                 timer_counter = duration_array[paused_sequence_state - 1];
             }
 
-            if (pb_falling & PIN5_bm)
+            if ((pb_falling & PIN5_bm) || (serial_command == CMD_EXIT))
             {
-                // S2 pressed
+                // S2 pressed or CMD_EXIT executed
                 sequence_state = 8;
                 sequence_mode_1 = SELECT_SEQUENCE;
                 sequence_mode_2 = 0;
+                input_state = START;
+                serial_command = NO_CMD;
             }
-            else if (pb_falling & PIN6_bm)
+            else if ((pb_falling & PIN6_bm) || (serial_command == CMD_STEP))
             {
-                // S3 pressed
+                // S3 pressed or CMD_STEP executed
                 if (paused_sequence_state <= 7)
                 {
                     paused_sequence_state++;
@@ -283,12 +300,14 @@ int main(void)
                     sequence_state = 8;
                     sequence_mode_1 = EXECUTE_SEQUENCE;
                     sequence_mode_2 = 2;
+                    serial_command = NO_CMD;
                     break;
                 }
 
                 sequence_mode_1 = EXECUTE_SEQUENCE;
                 sequence_mode_2 = 0;
                 sequence_mode_3 = 1;
+                serial_command = NO_CMD;
             }
             else if (pb_falling & PIN7_bm)
             {
@@ -311,6 +330,15 @@ int main(void)
 
         case TEST:
             break;
+        }
+
+        const char *ptr = buf;
+        while (*ptr != '\0')
+        {
+            while (!(USART0.STATUS & USART_DREIF_bm))
+                ;
+            USART0.TXDATAL = *ptr;
+            ptr++;
         }
     }
 }
