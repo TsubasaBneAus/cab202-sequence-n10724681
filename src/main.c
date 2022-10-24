@@ -94,6 +94,7 @@ int main(void)
             {
                 // S4 pressed
                 sequence_index_2 = sequence_index;
+                read_sequence_counter = 0;
                 read_sequence();
                 sequence_mode_1 = EXECUTE_SEQUENCE;
                 sequence_mode_2 = 0;
@@ -127,16 +128,23 @@ int main(void)
             break;
 
         case PAUSE_SEQUENCE:
-            if (paused_sequence_state == 0) {
+            if (paused_sequence_state == 0)
+            {
                 sequence_state = paused_sequence_state;
                 timer_counter = 0;
-            } else {
+            }
+            else if (paused_sequence_state == 0 && read_sequence_counter > 0)
+            {
+                TCA0.SINGLE.PERBUF = final_perbuf;
+                TCA0.SINGLE.CMP1BUF = final_cmp1buf;
+                TCA0.SINGLE.CMP0BUF = final_cmp0buf;
+            }
+            else
+            {
                 sequence_state = paused_sequence_state - 1;
                 timer_counter = duration_array[paused_sequence_state - 1];
             }
-            // sequence_state = paused_sequence_state;
-            // timer_counter = duration_array[paused_sequence_state];
-            // timer_counter = 0;
+
             if (pb_falling & PIN5_bm)
             {
                 // S2 pressed
@@ -151,6 +159,22 @@ int main(void)
                 {
                     paused_sequence_state++;
                 }
+                else if (paused_sequence_state == 8)
+                {
+                    sequence_state = 7;
+                    timer_counter = duration_array[7];
+                }
+
+                if (duration_array[paused_sequence_state] == 0)
+                {
+                    sequence_index = sequence_index_2;
+                    display_hex(sequence_index);
+                    sequence_state = 8;
+                    sequence_mode_1 = EXECUTE_SEQUENCE;
+                    sequence_mode_2 = 2;
+                    break;
+                }
+
                 sequence_mode_1 = EXECUTE_SEQUENCE;
                 sequence_mode_2 = 0;
                 sequence_mode_3 = 1;

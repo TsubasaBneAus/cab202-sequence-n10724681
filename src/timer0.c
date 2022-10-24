@@ -19,6 +19,7 @@ uint8_t sequence_state = 0;
 uint8_t paused_sequence_state = 0;
 uint8_t sequence_mode_2 = 0;
 uint8_t sequence_index_2;
+uint8_t read_sequence_counter;
 
 // Timer for DURATION
 void timer0_init()
@@ -38,6 +39,7 @@ ISR(TCB0_INT_vect)
         // The 8th sequence finishes
         // Read the next sequence
         sequence_index++;
+        read_sequence_counter++;
         read_sequence();
         timer_counter = 0;
         sequence_state = 0;
