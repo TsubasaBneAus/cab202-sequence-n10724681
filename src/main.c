@@ -9,6 +9,7 @@
 #include "pwm.h"
 #include "read_sequence.h"
 #include "adc.h"
+#include "uart_init.h"
 #include "qutyserial.h"
 
 void display_hex(uint8_t sequence_index);
@@ -19,7 +20,7 @@ int main(void)
     sequence_state = 9;
     timer_counter = 0;
 
-    serial_init();
+    // serial_init();
 
     display_and_button_init();
     spi_init();
@@ -27,6 +28,7 @@ int main(void)
     pwm_init();
     timer0_init();
     timer1_init();
+    uart_init();
 
     uint8_t pb_current = 0xFF;
     uint8_t pb_previous = 0xFF;
@@ -39,13 +41,122 @@ int main(void)
         EXECUTE_SEQUENCE,
         PAUSE_SEQUENCE,
         TEST
-    } STATE;
+    } STATE_1;
 
-    STATE sequence_mode_1 = SELECT_SEQUENCE;
+    STATE_1 sequence_mode_1 = SELECT_SEQUENCE;
     uint8_t sequence_mode_3 = 0;
+
+    typedef enum
+    {
+        START,
+        ESCAPE,
+        ID,
+        PAYLOAD
+    } STATE_2;
+
+    STATE_2 input_state = START;
+
+    char buf[128];
 
     while (1)
     {
+        char c = uart_getc();
+
+        switch (input_state)
+        {
+        case START:
+            if (c == 0x5C)
+            {
+                sprintf(buf, "\\\n");
+                input_state = ESCAPE;
+            }
+            else
+            {
+                sprintf(buf, "#NACK\n");
+                input_state = START;
+            }
+            break;
+
+        case ESCAPE:
+            if (c == 0x5C)
+            {
+                sprintf(buf, "\\\n");
+                input_state = ID;
+            }
+            else
+            {
+                sprintf(buf, "#NACK\n");
+                input_state = START;
+            }
+            break;
+
+        case ID:
+            switch (c)
+            {
+            case 's':
+                sprintf(buf, "s\nENTER YOUR INPUT\n");
+                input_state = START;
+                break;
+
+            case 't':
+                sprintf(buf, "t\n");
+                input_state = START;
+                break;
+
+            case 'e':
+                sprintf(buf, "e\n");
+                input_state = START;
+                break;
+
+            case 'p':
+                sprintf(buf, "p\n");
+                input_state = START;
+                break;
+
+            case 'n':
+                sprintf(buf, "n\n");
+                input_state = START;
+                break;
+
+            case 'y':
+                sprintf(buf, "y\n");
+                input_state = START;
+                break;
+
+            case 'i':
+                sprintf(buf, "i\n");
+                input_state = START;
+                break;
+
+            case 'd':
+                sprintf(buf, "d\n");
+                input_state = START;
+                break;
+
+            case 'u':
+                sprintf(buf, "u\n");
+                input_state = START;
+                break;
+
+            default:
+                sprintf(buf, "#NACK\n");
+                input_state = START;
+                break;
+            }
+
+        case PAYLOAD:
+            break;
+        }
+
+        const char *ptr = buf;
+        while (*ptr != '\0')
+        {
+            while (!(USART0.STATUS & USART_DREIF_bm))
+                ;
+            USART0.TXDATAL = *ptr;
+            ptr++;
+        }
+
         pb_previous = pb_current;
         pb_current = pb_debounced;
 
