@@ -146,7 +146,7 @@ int main(void)
                     sprintf(buf, "#ACK\n");
                     break;
 
-                case 0x69:
+                case 'i':
                     serial_command = CMD_SEQIDX;
                     cmd_messages = PAYLOAD;
                     break;
