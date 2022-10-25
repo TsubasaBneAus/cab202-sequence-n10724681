@@ -63,6 +63,7 @@ int main(void)
     STATE_3 serial_command = NO_CMD;
 
     char buf[128];
+    uint8_t sequence_digit = 0;
 
     display_and_button_init();
     spi_init();
@@ -81,9 +82,9 @@ int main(void)
             switch (cmd_messages)
             {
             case START:
-                if (c == 0x5C)
+                if (c == '\\')
                 {
-                    sprintf(buf, "\\\n");
+                    sprintf(buf, "");
                     cmd_messages = ESCAPE;
                 }
                 else
@@ -94,9 +95,9 @@ int main(void)
                 break;
 
             case ESCAPE:
-                if (c == 0x5C)
+                if (c == '\\')
                 {
-                    sprintf(buf, "\\\n");
+                    sprintf(buf, "");
                     cmd_messages = ID;
                 }
                 else
@@ -116,8 +117,9 @@ int main(void)
                     break;
 
                 case 't':
-                    sprintf(buf, "#ACK\n");
+                    serial_command = CMD_TEST;
                     cmd_messages = START;
+                    sprintf(buf, "#ACK\n");
                     break;
 
                 case 'e':
@@ -139,33 +141,78 @@ int main(void)
                     break;
 
                 case 'y':
-                    sprintf(buf, "#ACK\n");
+                    serial_command = CMD_SYNC;
                     cmd_messages = START;
+                    sprintf(buf, "#ACK\n");
                     break;
 
-                case 'i':
-                    sprintf(buf, "i\n");
-                    cmd_messages = START;
+                case 0x69:
+                    serial_command = CMD_SEQIDX;
+                    cmd_messages = PAYLOAD;
                     break;
 
                 case 'd':
-                    sprintf(buf, "d\n");
-                    cmd_messages = START;
+                    serial_command = CMD_TEST_SEQ;
+                    cmd_messages = PAYLOAD;
                     break;
 
                 case 'u':
-                    sprintf(buf, "u\n");
-                    cmd_messages = START;
+                    serial_command = CMD_TEST_SEQNS;
+                    cmd_messages = PAYLOAD;
                     break;
 
                 default:
                     sprintf(buf, "#NACK\n");
+                    serial_command = NO_CMD;
                     cmd_messages = START;
                     break;
                 }
+                break;
 
             case PAYLOAD:
-                break;
+                if (serial_command == CMD_SEQIDX)
+                {
+                    if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))
+                    {
+                        if (c >= '0' && c <= '9') {
+                            c = c - 48;
+                        } else {
+                            c = c - 87;
+                        }
+
+                        if (sequence_digit == 0)
+                        {
+                            sequence_index = c;
+                            sequence_digit = 1;
+                            cmd_messages = PAYLOAD;
+                            sprintf(buf, "");
+                        }
+                        else
+                        {
+                            sequence_index = (sequence_index << 4) | c;
+                            display_hex(sequence_index);
+                            sequence_digit = 0;
+                            cmd_messages = START;
+                            serial_command = NO_CMD;
+                            sprintf(buf, "#ACK\n");
+                        }
+                    }
+                    else
+                    {
+                        cmd_messages = START;
+                        serial_command = NO_CMD;
+                        sprintf(buf, "#NACK\n");
+                    }
+                    break;
+                }
+                else if (serial_command == CMD_TEST_SEQ)
+                {
+                    break;
+                }
+                else if (serial_command == CMD_TEST_SEQNS)
+                {
+                    break;
+                }
             }
 
             const char *ptr = buf;
