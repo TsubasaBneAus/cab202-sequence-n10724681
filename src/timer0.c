@@ -421,6 +421,7 @@ ISR(TCB0_INT_vect)
         TCA0.SINGLE.CMP0BUF = 0;
         sequence_state = 9;
         timer_counter = 0;
+        sequence_index = sequence_index_2;
         display_hex(sequence_index);
     }
 

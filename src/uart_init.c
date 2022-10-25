@@ -8,9 +8,13 @@ void uart_init(void)
     USART0.CTRLB = USART_RXEN_bm | USART_TXEN_bm;
 }
 
+uint8_t uart_has_data(void) {
+    return USART0.STATUS & USART_RXCIF_bm;
+}
+
 uint8_t uart_getc(void)
 {
-    while (!(USART0.STATUS & USART_RXCIF_bm)); // Wait for data
+    while (!(USART0.STATUS & USART_RXCIF_bm));
     return USART0.RXDATAL;
 }
 

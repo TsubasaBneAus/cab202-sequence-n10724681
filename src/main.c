@@ -20,16 +20,6 @@ int main(void)
     sequence_state = 9;
     timer_counter = 0;
 
-    // serial_init();
-
-    display_and_button_init();
-    spi_init();
-    adc_init();
-    pwm_init();
-    timer0_init();
-    timer1_init();
-    uart_init();
-
     uint8_t pb_current = 0xFF;
     uint8_t pb_previous = 0xFF;
     uint8_t pb_changed;
@@ -54,9 +44,10 @@ int main(void)
         PAYLOAD
     } STATE_2;
 
-    STATE_2 input_state = START;
+    STATE_2 cmd_messages = START;
 
-    typedef enum {
+    typedef enum
+    {
         CMD_SEQ,
         CMD_TEST,
         CMD_EXIT,
@@ -73,100 +64,119 @@ int main(void)
 
     char buf[128];
 
+    display_and_button_init();
+    spi_init();
+    adc_init();
+    pwm_init();
+    timer0_init();
+    timer1_init();
+    uart_init();
+
     while (1)
     {
+        if (uart_has_data())
+        {
+            uint8_t c = uart_getc();
 
-        // char c = uart_getc();
-        // switch (input_state)
-        // {
-        // case START:
-        //     if (c == 0x5C)
-        //     {
-        //         sprintf(buf, "\\\n");
-        //         input_state = ESCAPE;
-        //     }
-        //     else
-        //     {
-        //         sprintf(buf, "#NACK\n");
-        //         input_state = START;
-        //     }
-        //     break;
+            switch (cmd_messages)
+            {
+            case START:
+                if (c == 0x5C)
+                {
+                    sprintf(buf, "\\\n");
+                    cmd_messages = ESCAPE;
+                }
+                else
+                {
+                    sprintf(buf, "#NACK\n");
+                    cmd_messages = START;
+                }
+                break;
 
-        // case ESCAPE:
-        //     if (c == 0x5C)
-        //     {
-        //         sprintf(buf, "\\\n");
-        //         input_state = ID;
-        //     }
-        //     else
-        //     {
-        //         sprintf(buf, "#NACK\n");
-        //         input_state = START;
-        //     }
-        //     break;
+            case ESCAPE:
+                if (c == 0x5C)
+                {
+                    sprintf(buf, "\\\n");
+                    cmd_messages = ID;
+                }
+                else
+                {
+                    sprintf(buf, "#NACK\n");
+                    cmd_messages = START;
+                }
+                break;
 
-        // case ID:
-        //     switch (c)
-        //     {
-        //     case 's':
-        //         sequence_mode_1 = SELECT_SEQUENCE;
-        //         serial_command = CMD_SEQ;
-        //         sprintf(buf, "#ACK\n");
-        //         break;
+            case ID:
+                switch (c)
+                {
+                case 's':
+                    sequence_mode_1 = SELECT_SEQUENCE;
+                    serial_command = CMD_SEQ;
+                    sprintf(buf, "#ACK\n");
+                    break;
 
-        //     case 't':
-        //         sprintf(buf, "#ACK\n");
-        //         input_state = START;
-        //         break;
+                case 't':
+                    sprintf(buf, "#ACK\n");
+                    cmd_messages = START;
+                    break;
 
-        //     case 'e':
-        //         sequence_mode_1 = PAUSE_SEQUENCE;
-        //         serial_command = CMD_EXIT;
-        //         sprintf(buf, "#ACK\n");
-        //         break;
+                case 'e':
+                    sequence_mode_1 = PAUSE_SEQUENCE;
+                    serial_command = CMD_EXIT;
+                    sprintf(buf, "#ACK\n");
+                    break;
 
-        //     case 'p':
-        //         sequence_mode_1 = EXECUTE_SEQUENCE;
-        //         serial_command = CMD_PAUSE;
-        //         sprintf(buf, "#ACK\n");
-        //         break;
+                case 'p':
+                    sequence_mode_1 = EXECUTE_SEQUENCE;
+                    serial_command = CMD_PAUSE;
+                    sprintf(buf, "#ACK\n");
+                    break;
 
-        //     case 'n':
-        //         sequence_mode_1 = PAUSE_SEQUENCE;
-        //         serial_command = CMD_STEP;
-        //         sprintf(buf, "#ACK\n");
-        //         break;
+                case 'n':
+                    sequence_mode_1 = PAUSE_SEQUENCE;
+                    serial_command = CMD_STEP;
+                    sprintf(buf, "#ACK\n");
+                    break;
 
-        //     case 'y':
-        //         sprintf(buf, "#ACK\n");
-        //         input_state = START;
-        //         break;
+                case 'y':
+                    sprintf(buf, "#ACK\n");
+                    cmd_messages = START;
+                    break;
 
-        //     case 'i':
-        //         sprintf(buf, "i\n");
-        //         input_state = START;
-        //         break;
+                case 'i':
+                    sprintf(buf, "i\n");
+                    cmd_messages = START;
+                    break;
 
-        //     case 'd':
-        //         sprintf(buf, "d\n");
-        //         input_state = START;
-        //         break;
+                case 'd':
+                    sprintf(buf, "d\n");
+                    cmd_messages = START;
+                    break;
 
-        //     case 'u':
-        //         sprintf(buf, "u\n");
-        //         input_state = START;
-        //         break;
+                case 'u':
+                    sprintf(buf, "u\n");
+                    cmd_messages = START;
+                    break;
 
-        //     default:
-        //         sprintf(buf, "#NACK\n");
-        //         input_state = START;
-        //         break;
-        //     }
+                default:
+                    sprintf(buf, "#NACK\n");
+                    cmd_messages = START;
+                    break;
+                }
 
-        // case PAYLOAD:
-        //     break;
-        // }
+            case PAYLOAD:
+                break;
+            }
 
+            const char *ptr = buf;
+            while (*ptr != '\0')
+            {
+                while (!(USART0.STATUS & USART_DREIF_bm))
+                    ;
+                USART0.TXDATAL = *ptr;
+                ptr++;
+            }
+        }
 
         pb_previous = pb_current;
         pb_current = pb_debounced;
@@ -222,7 +232,7 @@ int main(void)
                 sequence_mode_2 = 0;
                 sequence_state = 0;
                 timer_counter = 0;
-                input_state = START;
+                cmd_messages = START;
                 serial_command = NO_CMD;
             }
             break;
@@ -240,13 +250,14 @@ int main(void)
                 // S4 pressed or CMD_PAUSE executed
                 paused_sequence_state = sequence_state;
                 sequence_mode_1 = PAUSE_SEQUENCE;
-                input_state = START;
+                cmd_messages = START;
                 serial_command = NO_CMD;
             }
 
             if (sequence_mode_2 == 2)
             {
-                display_hex(sequence_index_2);
+                sequence_index = sequence_index_2;
+                display_hex(sequence_index);
                 sequence_mode_1 = SELECT_SEQUENCE;
                 sequence_mode_2 = 0;
             }
@@ -277,7 +288,7 @@ int main(void)
                 sequence_state = 8;
                 sequence_mode_1 = SELECT_SEQUENCE;
                 sequence_mode_2 = 0;
-                input_state = START;
+                cmd_messages = START;
                 serial_command = NO_CMD;
             }
             else if ((pb_falling & PIN6_bm) || (serial_command == CMD_STEP))
@@ -295,11 +306,10 @@ int main(void)
 
                 if (duration_array[paused_sequence_state] == 0)
                 {
-                    sequence_index = sequence_index_2;
-                    display_hex(sequence_index);
                     sequence_state = 8;
                     sequence_mode_1 = EXECUTE_SEQUENCE;
                     sequence_mode_2 = 2;
+                    cmd_messages = START;
                     serial_command = NO_CMD;
                     break;
                 }
@@ -307,6 +317,7 @@ int main(void)
                 sequence_mode_1 = EXECUTE_SEQUENCE;
                 sequence_mode_2 = 0;
                 sequence_mode_3 = 1;
+                cmd_messages = START;
                 serial_command = NO_CMD;
             }
             else if (pb_falling & PIN7_bm)
@@ -330,15 +341,6 @@ int main(void)
 
         case TEST:
             break;
-        }
-
-        const char *ptr = buf;
-        while (*ptr != '\0')
-        {
-            while (!(USART0.STATUS & USART_DREIF_bm))
-                ;
-            USART0.TXDATAL = *ptr;
-            ptr++;
         }
     }
 }
