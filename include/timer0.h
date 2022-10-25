@@ -12,5 +12,6 @@ extern volatile uint8_t sequence_state;
 extern volatile uint8_t paused_sequence_state;
 extern volatile uint8_t sequence_mode_2;
 extern volatile uint8_t sequence_index_2;
+extern volatile uint8_t read_sequence_counter;
 
 void timer0_init();
