@@ -64,7 +64,6 @@ int main(void)
 
     char buf[128];
     uint8_t sequence_digit = 0;
-    uint8_t serial_command_pause = 0;
 
     display_and_button_init();
     spi_init();
@@ -112,34 +111,50 @@ int main(void)
                 switch (c)
                 {
                 case 's':
-                    if (serial_command_pause == 0) {
-                        sequence_mode_1 = SELECT_SEQUENCE;
-                    }
                     serial_command = CMD_SEQ;
                     sprintf(buf, "#ACK\n");
                     break;
 
                 case 't':
-                    serial_command = CMD_TEST;
+                    if (serial_command != CMD_TEST)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     cmd_messages = START;
                     sprintf(buf, "#ACK\n");
                     break;
 
                 case 'e':
-                    sequence_mode_1 = PAUSE_SEQUENCE;
+                    if (sequence_mode_1 != PAUSE_SEQUENCE)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     serial_command = CMD_EXIT;
                     sprintf(buf, "#ACK\n");
                     break;
 
                 case 'p':
-                    serial_command_pause = 1;
-                    sequence_mode_1 = EXECUTE_SEQUENCE;
+                    if (sequence_mode_1 != EXECUTE_SEQUENCE)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     serial_command = CMD_PAUSE;
                     sprintf(buf, "#ACK\n");
                     break;
 
                 case 'n':
-                    sequence_mode_1 = PAUSE_SEQUENCE;
+                    if (sequence_mode_1 != PAUSE_SEQUENCE)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     serial_command = CMD_STEP;
                     sprintf(buf, "#ACK\n");
                     break;
@@ -151,6 +166,12 @@ int main(void)
                     break;
 
                 case 'i':
+                    if (sequence_mode_1 != SELECT_SEQUENCE)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     serial_command = CMD_SEQIDX;
                     cmd_messages = PAYLOAD;
                     break;
@@ -314,6 +335,8 @@ int main(void)
                 display_hex(sequence_index);
                 sequence_mode_1 = SELECT_SEQUENCE;
                 sequence_mode_2 = 0;
+                cmd_messages = START;
+                serial_command = NO_CMD;
             }
 
             break;
@@ -376,22 +399,14 @@ int main(void)
             }
             else if ((pb_falling & PIN7_bm) || (serial_command == CMD_SEQ))
             {
-                // S4 pressed
+                // S4 pressed or CMD_SEQ executed
                 if (paused_sequence_state <= 7)
                 {
                     paused_sequence_state++;
                 }
                 sequence_mode_1 = EXECUTE_SEQUENCE;
                 sequence_mode_2 = 0;
-                serial_command_pause = 0;
             }
-
-            if (sequence_mode_2 == 2)
-            {
-                sequence_mode_1 = SELECT_SEQUENCE;
-                sequence_mode_2 = 0;
-            }
-
             break;
 
         case TEST:
