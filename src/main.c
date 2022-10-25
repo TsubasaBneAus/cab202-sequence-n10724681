@@ -64,6 +64,7 @@ int main(void)
 
     char buf[128];
     uint8_t sequence_digit = 0;
+    uint8_t serial_command_pause = 0;
 
     display_and_button_init();
     spi_init();
@@ -111,7 +112,9 @@ int main(void)
                 switch (c)
                 {
                 case 's':
-                    sequence_mode_1 = SELECT_SEQUENCE;
+                    if (serial_command_pause == 0) {
+                        sequence_mode_1 = SELECT_SEQUENCE;
+                    }
                     serial_command = CMD_SEQ;
                     sprintf(buf, "#ACK\n");
                     break;
@@ -129,6 +132,7 @@ int main(void)
                     break;
 
                 case 'p':
+                    serial_command_pause = 1;
                     sequence_mode_1 = EXECUTE_SEQUENCE;
                     serial_command = CMD_PAUSE;
                     sprintf(buf, "#ACK\n");
@@ -174,9 +178,12 @@ int main(void)
                 {
                     if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))
                     {
-                        if (c >= '0' && c <= '9') {
+                        if (c >= '0' && c <= '9')
+                        {
                             c = c - 48;
-                        } else {
+                        }
+                        else
+                        {
                             c = c - 87;
                         }
 
@@ -367,7 +374,7 @@ int main(void)
                 cmd_messages = START;
                 serial_command = NO_CMD;
             }
-            else if (pb_falling & PIN7_bm)
+            else if ((pb_falling & PIN7_bm) || (serial_command == CMD_SEQ))
             {
                 // S4 pressed
                 if (paused_sequence_state <= 7)
@@ -376,6 +383,7 @@ int main(void)
                 }
                 sequence_mode_1 = EXECUTE_SEQUENCE;
                 sequence_mode_2 = 0;
+                serial_command_pause = 0;
             }
 
             if (sequence_mode_2 == 2)
