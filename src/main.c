@@ -63,6 +63,7 @@ int main(void)
     STATE_3 serial_command = NO_CMD;
 
     char buf[128];
+    uint8_t sequence_digit = 0;
 
     display_and_button_init();
     spi_init();
@@ -81,9 +82,9 @@ int main(void)
             switch (cmd_messages)
             {
             case START:
-                if (c == 0x5C)
+                if (c == '\\')
                 {
-                    sprintf(buf, "\\\n");
+                    sprintf(buf, "");
                     cmd_messages = ESCAPE;
                 }
                 else
@@ -94,9 +95,9 @@ int main(void)
                 break;
 
             case ESCAPE:
-                if (c == 0x5C)
+                if (c == '\\')
                 {
-                    sprintf(buf, "\\\n");
+                    sprintf(buf, "");
                     cmd_messages = ID;
                 }
                 else
@@ -110,62 +111,136 @@ int main(void)
                 switch (c)
                 {
                 case 's':
-                    sequence_mode_1 = SELECT_SEQUENCE;
                     serial_command = CMD_SEQ;
                     sprintf(buf, "#ACK\n");
                     break;
 
                 case 't':
-                    sprintf(buf, "#ACK\n");
+                    if (serial_command != CMD_TEST)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     cmd_messages = START;
+                    sprintf(buf, "#ACK\n");
                     break;
 
                 case 'e':
-                    sequence_mode_1 = PAUSE_SEQUENCE;
+                    if (sequence_mode_1 != PAUSE_SEQUENCE)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     serial_command = CMD_EXIT;
                     sprintf(buf, "#ACK\n");
                     break;
 
                 case 'p':
-                    sequence_mode_1 = EXECUTE_SEQUENCE;
+                    if (sequence_mode_1 != EXECUTE_SEQUENCE)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     serial_command = CMD_PAUSE;
                     sprintf(buf, "#ACK\n");
                     break;
 
                 case 'n':
-                    sequence_mode_1 = PAUSE_SEQUENCE;
+                    if (sequence_mode_1 != PAUSE_SEQUENCE)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     serial_command = CMD_STEP;
                     sprintf(buf, "#ACK\n");
                     break;
 
                 case 'y':
-                    sprintf(buf, "#ACK\n");
+                    serial_command = CMD_SYNC;
                     cmd_messages = START;
+                    sprintf(buf, "#ACK\n");
                     break;
 
                 case 'i':
-                    sprintf(buf, "i\n");
-                    cmd_messages = START;
+                    if (sequence_mode_1 != SELECT_SEQUENCE)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
+                    serial_command = CMD_SEQIDX;
+                    cmd_messages = PAYLOAD;
                     break;
 
                 case 'd':
-                    sprintf(buf, "d\n");
-                    cmd_messages = START;
+                    serial_command = CMD_TEST_SEQ;
+                    cmd_messages = PAYLOAD;
                     break;
 
                 case 'u':
-                    sprintf(buf, "u\n");
-                    cmd_messages = START;
+                    serial_command = CMD_TEST_SEQNS;
+                    cmd_messages = PAYLOAD;
                     break;
 
                 default:
                     sprintf(buf, "#NACK\n");
+                    serial_command = NO_CMD;
                     cmd_messages = START;
                     break;
                 }
+                break;
 
             case PAYLOAD:
-                break;
+                if (serial_command == CMD_SEQIDX)
+                {
+                    if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))
+                    {
+                        if (c >= '0' && c <= '9')
+                        {
+                            c = c - 48;
+                        }
+                        else
+                        {
+                            c = c - 87;
+                        }
+
+                        if (sequence_digit == 0)
+                        {
+                            sequence_index = c;
+                            sequence_digit = 1;
+                            cmd_messages = PAYLOAD;
+                            sprintf(buf, "");
+                        }
+                        else
+                        {
+                            sequence_index = (sequence_index << 4) | c;
+                            display_hex(sequence_index);
+                            sequence_digit = 0;
+                            cmd_messages = START;
+                            serial_command = NO_CMD;
+                            sprintf(buf, "#ACK\n");
+                        }
+                    }
+                    else
+                    {
+                        cmd_messages = START;
+                        serial_command = NO_CMD;
+                        sprintf(buf, "#NACK\n");
+                    }
+                    break;
+                }
+                else if (serial_command == CMD_TEST_SEQ)
+                {
+                    break;
+                }
+                else if (serial_command == CMD_TEST_SEQNS)
+                {
+                    break;
+                }
             }
 
             const char *ptr = buf;
@@ -260,6 +335,8 @@ int main(void)
                 display_hex(sequence_index);
                 sequence_mode_1 = SELECT_SEQUENCE;
                 sequence_mode_2 = 0;
+                cmd_messages = START;
+                serial_command = NO_CMD;
             }
 
             break;
@@ -320,9 +397,9 @@ int main(void)
                 cmd_messages = START;
                 serial_command = NO_CMD;
             }
-            else if (pb_falling & PIN7_bm)
+            else if ((pb_falling & PIN7_bm) || (serial_command == CMD_SEQ))
             {
-                // S4 pressed
+                // S4 pressed or CMD_SEQ executed
                 if (paused_sequence_state <= 7)
                 {
                     paused_sequence_state++;
@@ -330,13 +407,6 @@ int main(void)
                 sequence_mode_1 = EXECUTE_SEQUENCE;
                 sequence_mode_2 = 0;
             }
-
-            if (sequence_mode_2 == 2)
-            {
-                sequence_mode_1 = SELECT_SEQUENCE;
-                sequence_mode_2 = 0;
-            }
-
             break;
 
         case TEST:
