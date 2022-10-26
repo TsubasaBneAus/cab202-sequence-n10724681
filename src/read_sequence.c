@@ -83,8 +83,7 @@ void read_sequence()
             buzzer_array[counter] = 3333333 / frequency;
             cmp1buf_array[counter] = (buzzer_array[counter] * (brightness_array[counter] + 1)) >> 8;
         }
-        // printf("Step %d: Duration: %d, Brightness: %d, Octave: %d, Note: %d, Frequency: %d Hz, PERBUF: %ld, CMP1BUF: %ld\n", counter, duration_array[counter], brightness_array[counter], octave_array[counter], note, frequency, buzzer_array[counter], cmp1buf_array[counter]);
-        // printf("0x%02X%02X%02X\n", descrambled_sequence[i], descrambled_sequence[i + 1], descrambled_sequence[i + 2]);
+
         counter++;
     }
 }

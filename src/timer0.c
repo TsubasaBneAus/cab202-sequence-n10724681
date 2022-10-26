@@ -48,17 +48,12 @@ ISR(TCB0_INT_vect)
 
     if (sequence_state == 0)
     {
-        if (sequence_mode_2 == 1)
-        {
-            // Pause the current sequence
-            timer_counter = 0;
-        }
-        else if (sequence_mode_2 == 0)
+        if (sequence_mode_2 == 0)
         {
             if (duration_array[0] == 0)
             {
                 // Stop the current sequence
-                sequence_mode_2 = 2;
+                sequence_mode_2 = 1;
                 TCA0.SINGLE.PERBUF = 33333;
                 TCA0.SINGLE.CMP1BUF = 33333;
                 TCA0.SINGLE.CMP0BUF = 0;
@@ -114,17 +109,12 @@ ISR(TCB0_INT_vect)
     }
     else if (sequence_state == 1)
     {
-        if (sequence_mode_2 == 1)
-        {
-            // Pause the current sequence
-            timer_counter = 0;
-        }
-        else if (sequence_mode_2 == 0)
+        if (sequence_mode_2 == 0)
         {
             if (duration_array[1] == 0)
             {
                 // Stop the current sequence
-                sequence_mode_2 = 2;
+                sequence_mode_2 = 1;
                 TCA0.SINGLE.PERBUF = 33333;
                 TCA0.SINGLE.CMP1BUF = 33333;
                 TCA0.SINGLE.CMP0BUF = 0;
@@ -159,17 +149,12 @@ ISR(TCB0_INT_vect)
     }
     else if (sequence_state == 2)
     {
-        if (sequence_mode_2 == 1)
-        {
-            // Pause the current sequence
-            timer_counter = 0;
-        }
-        else if (sequence_mode_2 == 0)
+        if (sequence_mode_2 == 0)
         {
             if (duration_array[2] == 0)
             {
                 // Stop the current sequence
-                sequence_mode_2 = 2;
+                sequence_mode_2 = 1;
                 TCA0.SINGLE.PERBUF = 33333;
                 TCA0.SINGLE.CMP1BUF = 33333;
                 TCA0.SINGLE.CMP0BUF = 0;
@@ -204,17 +189,12 @@ ISR(TCB0_INT_vect)
     }
     else if (sequence_state == 3)
     {
-        if (sequence_mode_2 == 1)
-        {
-            // Pause the current sequence
-            timer_counter = 0;
-        }
-        else if (sequence_mode_2 == 0)
+        if (sequence_mode_2 == 0)
         {
             if (duration_array[3] == 0)
             {
                 // Stop the current sequence
-                sequence_mode_2 = 2;
+                sequence_mode_2 = 1;
                 TCA0.SINGLE.PERBUF = 33333;
                 TCA0.SINGLE.CMP1BUF = 33333;
                 TCA0.SINGLE.CMP0BUF = 0;
@@ -249,17 +229,12 @@ ISR(TCB0_INT_vect)
     }
     else if (sequence_state == 4)
     {
-        if (sequence_mode_2 == 1)
-        {
-            // Pause the current sequence
-            timer_counter = 0;
-        }
-        else if (sequence_mode_2 == 0)
+        if (sequence_mode_2 == 0)
         {
             if (duration_array[4] == 0)
             {
                 // Stop the current sequence
-                sequence_mode_2 = 2;
+                sequence_mode_2 = 1;
                 TCA0.SINGLE.PERBUF = 33333;
                 TCA0.SINGLE.CMP1BUF = 33333;
                 TCA0.SINGLE.CMP0BUF = 0;
@@ -294,17 +269,12 @@ ISR(TCB0_INT_vect)
     }
     else if (sequence_state == 5)
     {
-        if (sequence_mode_2 == 1)
-        {
-            // Pause the current sequence
-            timer_counter = 0;
-        }
-        else if (sequence_mode_2 == 0)
+        if (sequence_mode_2 == 0)
         {
             if (duration_array[5] == 0)
             {
                 // Stop the current sequence
-                sequence_mode_2 = 2;
+                sequence_mode_2 = 1;
                 TCA0.SINGLE.PERBUF = 33333;
                 TCA0.SINGLE.CMP1BUF = 33333;
                 TCA0.SINGLE.CMP0BUF = 0;
@@ -339,17 +309,12 @@ ISR(TCB0_INT_vect)
     }
     else if (sequence_state == 6)
     {
-        if (sequence_mode_2 == 1)
-        {
-            // Pause the current sequence
-            timer_counter = 0;
-        }
-        else if (sequence_mode_2 == 0)
+        if (sequence_mode_2 == 0)
         {
             if (duration_array[6] == 0)
             {
                 // Stop the current sequence
-                sequence_mode_2 = 2;
+                sequence_mode_2 = 1;
                 TCA0.SINGLE.PERBUF = 33333;
                 TCA0.SINGLE.CMP1BUF = 33333;
                 TCA0.SINGLE.CMP0BUF = 0;
@@ -390,17 +355,12 @@ ISR(TCB0_INT_vect)
     }
     else if (sequence_state == 7)
     {
-        if (sequence_mode_2 == 1)
-        {
-            // Pause the current sequence
-            timer_counter = 0;
-        }
-        else if (sequence_mode_2 == 0)
+        if (sequence_mode_2 == 0)
         {
             if (duration_array[7] == 0)
             {
                 // Stop the current sequence
-                sequence_mode_2 = 2;
+                sequence_mode_2 = 1;
                 TCA0.SINGLE.PERBUF = 33333;
                 TCA0.SINGLE.CMP1BUF = 33333;
                 TCA0.SINGLE.CMP0BUF = 0;
@@ -415,7 +375,7 @@ ISR(TCB0_INT_vect)
     }
     else if (sequence_state == 8)
     {
-        sequence_mode_2 = 2;
+        sequence_mode_2 = 1;
         TCA0.SINGLE.PERBUF = 33333;
         TCA0.SINGLE.CMP1BUF = 33333;
         TCA0.SINGLE.CMP0BUF = 0;

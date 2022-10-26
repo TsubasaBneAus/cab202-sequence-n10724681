@@ -355,7 +355,7 @@ int main(void)
                 serial_command = NO_CMD;
             }
 
-            if (sequence_mode_2 == 2)
+            if (sequence_mode_2 == 1)
             {
                 sequence_index = sequence_index_2;
                 display_hex(sequence_index);
@@ -411,7 +411,7 @@ int main(void)
                 {
                     sequence_state = 8;
                     sequence_mode_1 = EXECUTE_SEQUENCE;
-                    sequence_mode_2 = 2;
+                    sequence_mode_2 = 1;
                     cmd_messages = START;
                     serial_command = NO_CMD;
                     break;

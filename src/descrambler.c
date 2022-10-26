@@ -38,6 +38,5 @@ void descramble_sequence(uint8_t sequence_index, uint8_t decoded_sequence[24], u
         {
             state_lfsr_2 = state_lfsr_2 ^ mask;
         }
-        // printf("%d: Descrambled Sequence: 0x%02X\n", i, descrambled_sequence[i]);
     }
 }

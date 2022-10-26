@@ -1,1 +1,1 @@
-void pwm_init();
+void pwm_init(void);

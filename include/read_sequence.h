@@ -1,3 +1,1 @@
-#include <stdint.h>
-
-void read_sequence();
+void read_sequence(void);
