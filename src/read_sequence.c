@@ -20,7 +20,6 @@ void read_sequence()
     // to duration_array, octave_array, note, and brightness_array respectively
     uint8_t counter = 0;
     uint8_t note;
-    uint16_t frequency;
 
     for (uint8_t i = 0; i <= 21; i += 3)
     {
@@ -31,56 +30,54 @@ void read_sequence()
         if (octave_array[counter] == 0)
         {
             buzzer_array[counter] = 0;
-            frequency = 0;
         }
         else
         {
             switch (note)
             {
             case 0:
-                frequency = 55;
+                buzzer_array[counter] = 60606;
                 break;
             case 1:
-                frequency = 58;
+                buzzer_array[counter] = 57471;
                 break;
             case 2:
-                frequency = 62;
+                buzzer_array[counter] = 53763;
                 break;
             case 3:
-                frequency = 65;
+                buzzer_array[counter] = 51282;
                 break;
             case 4:
-                frequency = 69;
+                buzzer_array[counter] = 48309;
                 break;
             case 5:
-                frequency = 73;
+                buzzer_array[counter] = 45662;
                 break;
             case 6:
-                frequency = 78;
+                buzzer_array[counter] = 42735;
                 break;
             case 7:
-                frequency = 82;
+                buzzer_array[counter] = 40650;
                 break;
             case 8:
-                frequency = 87;
+                buzzer_array[counter] = 38314;
                 break;
             case 9:
-                frequency = 92;
+                buzzer_array[counter] = 36232;
                 break;
             case 10:
-                frequency = 98;
+                buzzer_array[counter] = 34014;
                 break;
             case 11:
-                frequency = 104;
+                buzzer_array[counter] = 32051;
                 break;
             }
 
             for (uint8_t i = 0; i < (octave_array[counter] - 1); i++)
             {
-                frequency = frequency * 2;
+                buzzer_array[counter] = buzzer_array[counter] >> 1;
             }
 
-            buzzer_array[counter] = 3333333 / frequency;
             cmp1buf_array[counter] = (buzzer_array[counter] * (brightness_array[counter] + 1)) >> 8;
         }
 
