@@ -433,6 +433,8 @@ int main(void)
                 }
                 sequence_mode_1 = EXECUTE_SEQUENCE;
                 sequence_mode_2 = 0;
+                cmd_messages = START;
+                serial_command = NO_CMD;
             }
             break;
 
