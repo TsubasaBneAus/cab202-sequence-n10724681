@@ -10,7 +10,6 @@
 #include "read_sequence.h"
 #include "adc.h"
 #include "uart_init.h"
-#include "qutyserial.h"
 
 void display_hex(uint8_t sequence_index);
 
