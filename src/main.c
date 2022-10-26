@@ -111,12 +111,18 @@ int main(void)
                 switch (c)
                 {
                 case 's':
+                    if (sequence_mode_1 == TEST)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     serial_command = CMD_SEQ;
                     sprintf(buf, "#ACK\n");
                     break;
 
                 case 't':
-                    if (serial_command != CMD_TEST)
+                    if (sequence_mode_1 != SELECT_SEQUENCE)
                     {
                         sprintf(buf, "#NACK\n");
                         cmd_messages = START;
@@ -127,7 +133,7 @@ int main(void)
                     break;
 
                 case 'e':
-                    if (sequence_mode_1 != PAUSE_SEQUENCE)
+                    if (sequence_mode_1 == SELECT_SEQUENCE)
                     {
                         sprintf(buf, "#NACK\n");
                         cmd_messages = START;
@@ -177,11 +183,23 @@ int main(void)
                     break;
 
                 case 'd':
+                    if (sequence_mode_1 != TEST)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     serial_command = CMD_TEST_SEQ;
                     cmd_messages = PAYLOAD;
                     break;
 
                 case 'u':
+                    if (sequence_mode_1 != TEST)
+                    {
+                        sprintf(buf, "#NACK\n");
+                        cmd_messages = START;
+                        break;
+                    }
                     serial_command = CMD_TEST_SEQNS;
                     cmd_messages = PAYLOAD;
                     break;
@@ -320,7 +338,16 @@ int main(void)
                 break;
             }
 
-            if ((pb_falling & PIN7_bm) || (serial_command == CMD_PAUSE))
+            if (serial_command == CMD_EXIT)
+            {
+                // CMD_EXIT executed
+                sequence_state = 8;
+                sequence_mode_1 = SELECT_SEQUENCE;
+                sequence_mode_2 = 0;
+                cmd_messages = START;
+                serial_command = NO_CMD;
+            }
+            else if ((pb_falling & PIN7_bm) || (serial_command == CMD_PAUSE))
             {
                 // S4 pressed or CMD_PAUSE executed
                 paused_sequence_state = sequence_state;
@@ -410,6 +437,11 @@ int main(void)
             break;
 
         case TEST:
+            sequence_state = 8;
+            sequence_mode_1 = SELECT_SEQUENCE;
+            sequence_mode_2 = 0;
+            cmd_messages = START;
+            serial_command = NO_CMD;
             break;
         }
     }
