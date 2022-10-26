@@ -79,7 +79,7 @@ ISR(TCB0_INT_vect)
                 else
                 {
                     TCA0.SINGLE.PERBUF = buzzer_array[0];
-                    TCA0.SINGLE.CMP0BUF = buzzer_array[0] / 2;
+                    TCA0.SINGLE.CMP0BUF = buzzer_array[0] >> 1;
                     TCA0.SINGLE.CMP1BUF = cmp1buf_array[0];
                 }
             }
@@ -99,7 +99,7 @@ ISR(TCB0_INT_vect)
                 else
                 {
                     TCA0.SINGLE.PERBUF = buzzer_array[1];
-                    TCA0.SINGLE.CMP0BUF = buzzer_array[1] / 2;
+                    TCA0.SINGLE.CMP0BUF = buzzer_array[1] >> 1;
                     TCA0.SINGLE.CMP1BUF = cmp1buf_array[1];
                 }
             }
@@ -139,7 +139,7 @@ ISR(TCB0_INT_vect)
                 else
                 {
                     TCA0.SINGLE.PERBUF = buzzer_array[2];
-                    TCA0.SINGLE.CMP0BUF = buzzer_array[2] / 2;
+                    TCA0.SINGLE.CMP0BUF = buzzer_array[2] >> 1;
                     TCA0.SINGLE.CMP1BUF = cmp1buf_array[2];
                 }
             }
@@ -179,7 +179,7 @@ ISR(TCB0_INT_vect)
                 else
                 {
                     TCA0.SINGLE.PERBUF = buzzer_array[3];
-                    TCA0.SINGLE.CMP0BUF = buzzer_array[3] / 2;
+                    TCA0.SINGLE.CMP0BUF = buzzer_array[3] >> 1;
                     TCA0.SINGLE.CMP1BUF = cmp1buf_array[3];
                 }
             }
@@ -219,7 +219,7 @@ ISR(TCB0_INT_vect)
                 else
                 {
                     TCA0.SINGLE.PERBUF = buzzer_array[4];
-                    TCA0.SINGLE.CMP0BUF = buzzer_array[4] / 2;
+                    TCA0.SINGLE.CMP0BUF = buzzer_array[4] >> 1;
                     TCA0.SINGLE.CMP1BUF = cmp1buf_array[4];
                 }
             }
@@ -259,7 +259,7 @@ ISR(TCB0_INT_vect)
                 else
                 {
                     TCA0.SINGLE.PERBUF = buzzer_array[5];
-                    TCA0.SINGLE.CMP0BUF = buzzer_array[5] / 2;
+                    TCA0.SINGLE.CMP0BUF = buzzer_array[5] >> 1;
                     TCA0.SINGLE.CMP1BUF = cmp1buf_array[5];
                 }
             }
@@ -299,7 +299,7 @@ ISR(TCB0_INT_vect)
                 else
                 {
                     TCA0.SINGLE.PERBUF = buzzer_array[6];
-                    TCA0.SINGLE.CMP0BUF = buzzer_array[6] / 2;
+                    TCA0.SINGLE.CMP0BUF = buzzer_array[6] >> 1;
                     TCA0.SINGLE.CMP1BUF = cmp1buf_array[6];
                 }
             }
@@ -342,10 +342,10 @@ ISR(TCB0_INT_vect)
                 else
                 {
                     TCA0.SINGLE.PERBUF = buzzer_array[7];
-                    TCA0.SINGLE.CMP0BUF = buzzer_array[7] / 2;
+                    TCA0.SINGLE.CMP0BUF = buzzer_array[7] >> 2;
                     TCA0.SINGLE.CMP1BUF = cmp1buf_array[7];
                     final_perbuf = buzzer_array[7];
-                    final_cmp0buf = buzzer_array[7] / 2;
+                    final_cmp0buf = buzzer_array[7] >> 2;
                     final_cmp1buf = cmp1buf_array[7];
                 }
             }
