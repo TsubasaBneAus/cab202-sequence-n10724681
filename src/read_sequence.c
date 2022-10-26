@@ -66,7 +66,7 @@ void read_sequence()
                 buzzer_array[counter] = 36232;
                 break;
             case 10:
-                buzzer_array[counter] = 36014;
+                buzzer_array[counter] = 34014;
                 break;
             case 11:
                 buzzer_array[counter] = 32051;
