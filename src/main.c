@@ -132,8 +132,10 @@ int main(void)
                         cmd_messages = START;
                         break;
                     }
-                    cmd_messages = START;
+                    serial_command = CMD_TEST;
                     serial_command_test = 1;
+                    digit1 = 0b11110111;
+                    digit2 = 0b01110111;
                     sprintf(buf, "#ACK\n");
                     break;
 
@@ -197,6 +199,7 @@ int main(void)
                     serial_command = CMD_TEST_SEQ;
                     cmd_messages = PAYLOAD;
                     test_sequence_sum = 0x64;
+                    serial_command_test = 1;
                     break;
 
                 case 'u':
@@ -208,6 +211,8 @@ int main(void)
                     }
                     serial_command = CMD_TEST_SEQNS;
                     cmd_messages = PAYLOAD;
+                    test_sequence_sum = 0x64;
+                    serial_command_test = 1;
                     break;
 
                 default:
@@ -257,71 +262,78 @@ int main(void)
                     }
                     break;
                 }
-                else if (serial_command == CMD_TEST_SEQ)
+                else if ((serial_command == CMD_TEST_SEQ) || (serial_command == CMD_TEST_SEQNS))
                 {
-                    if (c >= 'A' && c <= 'Z')
+                    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= 'a' && c <= 'z') || (c == '+') || (c == '/'))
                     {
-                        c = c - 65; // 'A' ~ 'Z'
-                    }
-                    else if (c >= 'a' && c <= 'z')
-                    {
-                        c = c - 71; // 'a' ~ 'z'
-                    }
-                    else if (c >= '0' && c <= '9')
-                    {
-                        c = c + 4; // '0' ~ '9'
-                    }
-                    else if (c == '+')
-                    {
-                        c = 62; // '+'
-                    }
-                    else if (c == '/')
-                    {
-                        c = 63; // '/'
+                        if (test_sequence_counter < 32)
+                        {
+                            test_sequence[test_sequence_counter] = c;
+                            test_sequence_sum = test_sequence_sum + c;
+                            sprintf(buf, "%d: 0x%02lX\n", test_sequence_counter, test_sequence_sum);
+                            test_sequence_counter++;
+                        }
+                        else if (test_sequence_counter == 32)
+                        {
+                            if (c >= 'A' && c <= 'Z')
+                            {
+                                c = c - 65; // 'A' ~ 'Z'
+                            }
+                            else if (c >= 'a' && c <= 'z')
+                            {
+                                c = c - 71; // 'a' ~ 'z'
+                            }
+                            else if (c >= '0' && c <= '9')
+                            {
+                                c = c + 4; // '0' ~ '9'
+                            }
+                            else if (c == '+')
+                            {
+                                c = 62; // '+'
+                            }
+                            else
+                            {
+                                c = 63; // '/'
+                            }
+
+                            if ((test_sequence_sum & 0b00111111) != c)
+                            {
+                                test_sequence_counter = 0;
+                                test_sequence_sum = 0;
+                                serial_command_test = 1;
+                                cmd_messages = START;
+                                serial_command = NO_CMD;
+                                sprintf(buf, "#NACK\n");
+                            }
+                            else
+                            {
+                                if (serial_command == CMD_TEST_SEQ)
+                                {
+                                    serial_command_test = 2;
+                                }
+                                else if (serial_command == CMD_TEST_SEQNS)
+                                {
+                                    serial_command_test = 3;
+                                }
+                                test_sequence_counter = 0;
+                                test_sequence_sum = 0;
+                                cmd_messages = START;
+                                sprintf(buf, "#ACK\n");
+                            }
+                        }
+
+                        sequence_mode_1 = TEST;
+                        break;
                     }
                     else
                     {
+                        test_sequence_counter = 0;
                         serial_command_test = 0;
                         cmd_messages = START;
                         serial_command = NO_CMD;
                         sprintf(buf, "#NACK\n");
                         break;
                     }
-
-                    if (test_sequence_counter < 32)
-                    {
-                        test_sequence[test_sequence_counter] = c;
-                        test_sequence_sum = test_sequence_sum + c;
-                        test_sequence_counter++;
-                    }
-                    else if (test_sequence_counter == 32)
-                    {
-                        test_sequence[test_sequence_counter] = 0;
-                        test_sequence_counter++;
-                    }
-                    else
-                    {
-                        if ((test_sequence_sum & 0b00111111) != c)
-                        {
-                            serial_command_test = 0;
-                            cmd_messages = START;
-                            serial_command = NO_CMD;
-                            sprintf(buf, "#NACK\n");
-                            break;
-                        }
-
-                        test_sequence_counter = 0;
-                        test_sequence_sum = 0;
-                    }
-
-                    sequence_mode_1 = TEST;
-                    break;
-                }
-                else if (serial_command == CMD_TEST_SEQNS)
-                {
-                    cmd_messages = START;
-                    serial_command = NO_CMD;
-                    break;
                 }
             }
 
@@ -392,9 +404,25 @@ int main(void)
                 cmd_messages = START;
                 serial_command = NO_CMD;
             }
+            else if (serial_command == CMD_TEST)
+            {
+                sequence_mode_1 = TEST;
+                cmd_messages = START;
+                serial_command = NO_CMD;
+            }
             break;
 
         case EXECUTE_SEQUENCE:
+            if (((serial_command_test == 2) && (sequence_mode_2 == 1)) || ((serial_command_test == 3) && (sequence_mode_2 == 1)))
+            {
+                sequence_mode_1 = TEST;
+                digit1 = 0b11110111;
+                digit2 = 0b01110111;
+                serial_command_test = 1;
+                sequence_mode_2 = 0;
+                break;
+            }
+
             if (sequence_mode_3 == 1)
             {
                 sequence_mode_1 = PAUSE_SEQUENCE;
@@ -503,11 +531,27 @@ int main(void)
             break;
 
         case TEST:
-            sequence_state = 8;
-            sequence_mode_1 = SELECT_SEQUENCE;
-            sequence_mode_2 = 0;
-            cmd_messages = START;
-            serial_command = NO_CMD;
+            if (((serial_command == CMD_TEST_SEQ) && (serial_command_test == 2)) || ((serial_command == CMD_TEST_SEQNS) && (serial_command_test == 3)))
+            {
+                // CMD_TEST_SEQ executed or CMD_TEST_SEQNS executed
+                read_sequence_counter = 0;
+                read_sequence();
+                sequence_mode_1 = EXECUTE_SEQUENCE;
+                sequence_mode_2 = 0;
+                sequence_state = 0;
+                timer_counter = 0;
+                cmd_messages = START;
+                serial_command = NO_CMD;
+            }
+            else if (serial_command == CMD_EXIT)
+            {
+                // CMD_EXIT executed
+                sequence_state = 8;
+                sequence_mode_1 = SELECT_SEQUENCE;
+                sequence_mode_2 = 0;
+                cmd_messages = START;
+                serial_command = NO_CMD;
+            }
             break;
         }
     }

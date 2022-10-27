@@ -7,7 +7,15 @@ uint8_t serial_command_test = 0;
 // Decode bytes of SEQUENCE
 void decode_sequence(uint8_t sequence_index, uint8_t decoded_sequence[24])
 {
-    uint16_t sequence_offset = 32 * sequence_index;
+    uint16_t sequence_offset;
+    if (serial_command_test == 0) {
+        sequence_offset = 32 * sequence_index;
+    }
+    else
+    {
+        sequence_offset = 0;
+    }
+
     uint8_t converted_sequence[32];
     uint8_t counter_1 = 0;
 
@@ -46,8 +54,6 @@ void decode_sequence(uint8_t sequence_index, uint8_t decoded_sequence[24])
         }
         counter_1++;
     }
-
-    serial_command_test = 0;
 
     uint8_t counter_2 = 0;
     for (uint8_t i = 0; i < 29; i += 4)
