@@ -10,6 +10,7 @@
 #include "read_sequence.h"
 #include "adc.h"
 #include "uart_init.h"
+#include "decoder.h"
 
 void display_hex(uint8_t sequence_index);
 
@@ -63,6 +64,10 @@ int main(void)
 
     char buf[128];
     uint8_t sequence_digit = 0;
+    uint8_t test_sequence_counter = 0;
+    uint32_t test_sequence_sum = 0;
+
+    serial_command_test = 0;
 
     display_and_button_init();
     spi_init();
@@ -128,6 +133,7 @@ int main(void)
                         break;
                     }
                     cmd_messages = START;
+                    serial_command_test = 1;
                     sprintf(buf, "#ACK\n");
                     break;
 
@@ -190,6 +196,7 @@ int main(void)
                     }
                     serial_command = CMD_TEST_SEQ;
                     cmd_messages = PAYLOAD;
+                    test_sequence_sum = 0x64;
                     break;
 
                 case 'u':
@@ -252,10 +259,68 @@ int main(void)
                 }
                 else if (serial_command == CMD_TEST_SEQ)
                 {
+                    if (c >= 'A' && c <= 'Z')
+                    {
+                        c = c - 65; // 'A' ~ 'Z'
+                    }
+                    else if (c >= 'a' && c <= 'z')
+                    {
+                        c = c - 71; // 'a' ~ 'z'
+                    }
+                    else if (c >= '0' && c <= '9')
+                    {
+                        c = c + 4; // '0' ~ '9'
+                    }
+                    else if (c == '+')
+                    {
+                        c = 62; // '+'
+                    }
+                    else if (c == '/')
+                    {
+                        c = 63; // '/'
+                    }
+                    else
+                    {
+                        serial_command_test = 0;
+                        cmd_messages = START;
+                        serial_command = NO_CMD;
+                        sprintf(buf, "#NACK\n");
+                        break;
+                    }
+
+                    if (test_sequence_counter < 32)
+                    {
+                        test_sequence[test_sequence_counter] = c;
+                        test_sequence_sum = test_sequence_sum + c;
+                        test_sequence_counter++;
+                    }
+                    else if (test_sequence_counter == 32)
+                    {
+                        test_sequence[test_sequence_counter] = 0;
+                        test_sequence_counter++;
+                    }
+                    else
+                    {
+                        if ((test_sequence_sum & 0b00111111) != c)
+                        {
+                            serial_command_test = 0;
+                            cmd_messages = START;
+                            serial_command = NO_CMD;
+                            sprintf(buf, "#NACK\n");
+                            break;
+                        }
+
+                        test_sequence_counter = 0;
+                        test_sequence_sum = 0;
+                    }
+
+                    sequence_mode_1 = TEST;
                     break;
                 }
                 else if (serial_command == CMD_TEST_SEQNS)
                 {
+                    cmd_messages = START;
+                    serial_command = NO_CMD;
                     break;
                 }
             }
