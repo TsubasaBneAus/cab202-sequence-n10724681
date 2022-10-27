@@ -270,7 +270,6 @@ int main(void)
                         {
                             test_sequence[test_sequence_counter] = c;
                             test_sequence_sum = test_sequence_sum + c;
-                            sprintf(buf, "%d: 0x%02lX\n", test_sequence_counter, test_sequence_sum);
                             test_sequence_counter++;
                         }
                         else if (test_sequence_counter == 32)
